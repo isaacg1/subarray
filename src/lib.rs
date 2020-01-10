@@ -46,8 +46,8 @@ pub fn solve(largest_entry: usize) -> Vec<usize> {
                 best_array = current_array.clone();
             }
             let mut sum = 0;
-            for add_index in (0..current_array.len()).rev() {
-                sum += current_array[add_index];
+            for entry in current_array.iter().rev() {
+                sum += entry;
                 sums[sum] = true;
             }
             current_array.push(0);
@@ -56,6 +56,7 @@ pub fn solve(largest_entry: usize) -> Vec<usize> {
     best_array
 }
 
+#[allow(dead_code)]
 fn main() {
     let max_largest_entry: usize = std::env::args()
         .nth(1)
