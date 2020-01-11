@@ -1,11 +1,23 @@
 pub fn solve(largest_entry: usize) -> Vec<usize> {
+    for target_length in 1..=largest_entry {
+        let result = solve_inner(largest_entry, target_length);
+        if result.len() < target_length || result.len() == largest_entry {
+            return result
+        }
+    }
+    unreachable!()
+}
+
+fn solve_inner(largest_entry: usize, target_length: usize) -> Vec<usize> {
     let mut best_array = vec![];
     best_array.reserve(largest_entry);
     let mut current_array = vec![0];
     current_array.reserve(largest_entry);
     // In this version, sums ignores the sums involving the final element
-    let mut sums = vec![false; largest_entry * largest_entry + 2];
-    loop {
+    // Ignores bigger than half
+    let elems_needed = largest_entry * (largest_entry + 1) / 2 + 2;
+    let mut sums = vec![false; elems_needed + 4 - elems_needed % 4];
+    'outermost: loop {
         let mut recalculate = false;
         while !current_array.is_empty() && current_array[current_array.len() - 1] == largest_entry {
             current_array.pop();
@@ -16,18 +28,16 @@ pub fn solve(largest_entry: usize) -> Vec<usize> {
         }
         let last_index = current_array.len() - 1;
         current_array[last_index] += 1;
-        let mut failed = false;
         if recalculate {
-            for sum in &mut sums {
+            for sum in sums.iter_mut() {
                 *sum = false;
             }
-            'outer: for sub_start in 0..current_array.len() {
+            for sub_start in 0..current_array.len() {
                 let mut sum = 0;
                 for sub_end in sub_start..current_array.len() - 1 {
                     sum += current_array[sub_end];
                     if sums[sum] {
-                        failed = true;
-                        break 'outer;
+                        continue 'outermost
                     }
                     sums[sum] = true;
                 }
@@ -37,20 +47,25 @@ pub fn solve(largest_entry: usize) -> Vec<usize> {
         for add_index in (0..current_array.len()).rev() {
             sum += current_array[add_index];
             if sums[sum] {
-                failed = true;
-                break;
+                continue 'outermost
             }
         }
-        if !failed {
-            if current_array.len() > best_array.len() {
-                best_array = current_array.clone();
+        if current_array.len() > best_array.len() {
+            best_array.clone_from(&current_array);
+            if best_array.len() == target_length {
+                return best_array
             }
-            let mut sum = 0;
-            for entry in current_array.iter().rev() {
-                sum += entry;
-                sums[sum] = true;
-            }
+        }
+        let mut sum = 0;
+        for entry in current_array.iter().rev() {
+            sum += entry;
+            sums[sum] = true;
+        }
+        let midpoint = (target_length+1)/2;
+        if current_array.len() <= midpoint {
             current_array.push(0);
+        } else {
+            current_array.push(*current_array.iter().take(midpoint).min().unwrap())
         }
     }
     best_array
